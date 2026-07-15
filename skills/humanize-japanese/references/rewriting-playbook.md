@@ -46,7 +46,7 @@
 比較時は必要に応じて保護語を明示する。
 
 ```bash
-python3 scripts/metrics.py before.md --compare after.md \
+scripts/metrics.py before.md --compare after.md \
   --protect "佐藤美咲" --protect "Project KAI"
 ```
 

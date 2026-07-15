@@ -15,14 +15,10 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CASES = ROOT / "evals" / "cases.json"
-METRICS_PATH = ROOT / ".claude" / "skills" / "humanize-japanese" / "scripts" / "metrics.py"
+SKILL_ROOT = ROOT / "skills" / "humanize-japanese"
+METRICS_PATH = SKILL_ROOT / "scripts" / "metrics.py"
 TAXONOMY_PATH = (
-    ROOT
-    / ".claude"
-    / "skills"
-    / "humanize-japanese"
-    / "references"
-    / "ai-tell-taxonomy.md"
+    SKILL_ROOT / "references" / "ai-tell-taxonomy.md"
 )
 
 SPEC = importlib.util.spec_from_file_location("eval_humanize_metrics", METRICS_PATH)

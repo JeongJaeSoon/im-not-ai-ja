@@ -14,18 +14,22 @@ on:
           - claude-opus-4-8
   pull_request:
     paths:
-      - ".claude/skills/humanize-japanese/**"
-      - "codex/skills/humanize-japanese/**"
+      - "skills/humanize-japanese/**"
+      - "INSTALL.md"
+      - "README.md"
       - "evals/**"
       - "tests/**"
+      - "scripts/validate_repo.py"
       - ".github/workflows/skill-eval.yml"
   push:
     branches: [main]
     paths:
-      - ".claude/skills/humanize-japanese/**"
-      - "codex/skills/humanize-japanese/**"
+      - "skills/humanize-japanese/**"
+      - "INSTALL.md"
+      - "README.md"
       - "evals/**"
       - "tests/**"
+      - "scripts/validate_repo.py"
       - ".github/workflows/skill-eval.yml"
 
 permissions:
@@ -44,6 +48,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Validate portable Agent Skill structure
+        run: python3 scripts/validate_repo.py
+      - name: Test skill behavior and standalone portability
+        run: python3 -m unittest discover -s tests -v
       - name: Validate reference fixture
         env:
           PYTHONDONTWRITEBYTECODE: "1"
@@ -94,7 +102,7 @@ jobs:
           prompt: |
             This is a read-only regression eval for the repository's humanize-japanese skill.
 
-            1. Read `.claude/skills/humanize-japanese/SKILL.md` and every reference it tells you to read.
+            1. Read `skills/humanize-japanese/SKILL.md` and every reference it tells you to read. This is the single canonical skill installed for both Claude Code and Codex.
             2. Read `evals/cases.json`.
             3. Apply the skill independently to every case. Respect each case's context and target register.
             4. Preserve all protected content and modality. Do not invent facts, sources, apologies, emotions, or experiences.

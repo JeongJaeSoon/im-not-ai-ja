@@ -1,15 +1,19 @@
 # Notices and attribution
 
-## Primary source
+## Origin and current relationship
 
-This project is an independent Japanese adaptation inspired by and derived in structure from:
+This project began as an independent Japanese adaptation inspired by:
 
 - `epoko77-ai/im-not-ai` — https://github.com/epoko77-ai/im-not-ai
 - Upstream revision inspected during initial implementation: `14aeb52d13e737beb4e999cb7cb92275d0969689`
 - License: MIT
 - Copyright: `Copyright (c) 2026 epoko77-ai`
 
-The Fast / Strict workflow, detector–rewriter–auditor separation, severity-based taxonomy, install layout, and content-fidelity contract originate from or are adapted from that project. This repository is not a GitHub fork. The upstream copyright notice and MIT License are preserved in `LICENSE`.
+The upstream project informed the initial Fast / Strict workflow, severity-based review, minimum-editing principle, and content-fidelity contract. Its detector–rewriter–auditor idea remains a workflow influence, but the current repository implements those responsibilities as phases inside one portable skill rather than as copied or bundled agents.
+
+The current Japanese taxonomy, R0–R4 register model, honorific handling, metrics, evaluation system, portable Agent Skill implementation, and installation layout are developed independently in this repository. No upstream runtime adapter, agent definition, command, plugin manifest, or package layout is used by the current implementation.
+
+This repository is not a GitHub fork. The upstream copyright notice and MIT License are preserved in `LICENSE` to document the project's origin and the design influence retained from its initial implementation.
 
 ## Japanese open-source references
 
@@ -21,6 +25,15 @@ The Japanese taxonomy was designed after comparing these projects:
 - `yourbright-jp/humanizer-jp` — https://github.com/yourbright-jp/humanizer-jp — revision `e252b87c39270a0b9359c1e1e1f8d48b710ff4de` — MIT, Copyright (c) 2026 yourbright-jp. Consulted for sentence-length CV, punctuation, and register-confound findings.
 
 No corpus data from these repositories is redistributed here. Rules were reconciled and rewritten for this project; empirical findings take precedence where heuristic projects disagree.
+
+## Portable Agent Skill packaging references
+
+The canonical `skills/humanize-japanese/` layout and installation documentation were checked against the Agent Skills specification and these public repositories. They were consulted for interoperability conventions; no skill content was copied from them.
+
+- Agent Skills specification — https://agentskills.io/specification. Used as the normative structure: `SKILL.md` with optional `references/`, `scripts/`, and `assets/`.
+- `freee/freee-mcp` — https://github.com/freee/freee-mcp — revision `f488b18f4de95778147357cbc13ac750e6abe58f`. Consulted for maintaining one canonical `skills/` tree across clients.
+- `anthropics/skills` — https://github.com/anthropics/skills — revision `9d2f1ae187231d8199c64b5b762e1bdf2244733d`. Consulted for the root-level `skills/<name>/SKILL.md` repository convention.
+- `vercel-labs/skills` — https://github.com/vercel-labs/skills — revision `5527c09adc367612b0bffd9c80e3bc28a6b01b6d`. Consulted for cross-agent discovery, canonical-copy installation, copy-mode fallback, and Claude Code / Codex agent identifiers.
 
 ## Research references
 
