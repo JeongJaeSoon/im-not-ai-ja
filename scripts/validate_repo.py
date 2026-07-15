@@ -11,6 +11,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = "0.3.0"
+PLUGIN_NAME = "humanize-japanese"
+MARKETPLACE_NAME = "im-not-ai-ja"
 SKILL_ROOT = ROOT / "skills" / "humanize-japanese"
 
 
@@ -63,6 +65,10 @@ def main() -> int:
         "INSTALL.md",
         "LICENSE",
         "NOTICE.md",
+        ".agents/plugins/marketplace.json",
+        ".claude-plugin/marketplace.json",
+        ".claude-plugin/plugin.json",
+        ".codex-plugin/plugin.json",
         "skills/humanize-japanese/SKILL.md",
         "skills/humanize-japanese/assets/baseline.json",
         "skills/humanize-japanese/references/ai-tell-taxonomy.md",
@@ -82,11 +88,8 @@ def main() -> int:
             fail(f"missing required file: {relative}")
 
     forbidden = (
-        ".agents",
         ".claude",
-        ".claude-plugin",
         ".codex",
-        ".codex-plugin",
         "agents",
         "codex",
         "commands",
@@ -144,6 +147,39 @@ def main() -> int:
         if ".git" not in path.parts:
             validate_json(path)
 
+    claude_plugin = json.loads(
+        (ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+    codex_plugin = json.loads(
+        (ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+    claude_marketplace = json.loads(
+        (ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+    )
+    codex_marketplace = json.loads(
+        (ROOT / ".agents" / "plugins" / "marketplace.json").read_text(encoding="utf-8")
+    )
+    if claude_plugin.get("name") != PLUGIN_NAME or codex_plugin.get("name") != PLUGIN_NAME:
+        fail("Claude Code and Codex plugin names must match the canonical skill")
+    if claude_plugin.get("skills") != ["./skills"]:
+        fail("Claude Code plugin must point to the canonical skills directory")
+    if codex_plugin.get("skills") != "./skills":
+        fail("Codex plugin must point to the canonical skills directory")
+    if claude_marketplace.get("name") != MARKETPLACE_NAME:
+        fail("Claude Code marketplace name is out of sync")
+    if codex_marketplace.get("name") != MARKETPLACE_NAME:
+        fail("Codex marketplace name is out of sync")
+    claude_entries = claude_marketplace.get("plugins", [])
+    codex_entries = codex_marketplace.get("plugins", [])
+    if len(claude_entries) != 1 or claude_entries[0].get("name") != PLUGIN_NAME:
+        fail("Claude Code marketplace must expose exactly the canonical plugin")
+    if claude_entries[0].get("source") != "./":
+        fail("Claude Code marketplace plugin source must be the repository root")
+    if len(codex_entries) != 1 or codex_entries[0].get("name") != PLUGIN_NAME:
+        fail("Codex marketplace must expose exactly the canonical plugin")
+    if codex_entries[0].get("source") != {"source": "local", "path": "./"}:
+        fail("Codex marketplace plugin source must be the repository root")
+
     result_schema = json.loads((ROOT / "evals" / "result.schema.json").read_text(encoding="utf-8"))
     runtime_schema = {
         key: value for key, value in result_schema.items() if key not in {"$schema", "title"}
@@ -170,9 +206,15 @@ def main() -> int:
     project_match = re.search(r'^version\s*=\s*"([^"]+)"$', project_text, re.MULTILINE)
     metrics_text = (SKILL_ROOT / "scripts" / "metrics.py").read_text(encoding="utf-8")
     metrics_match = re.search(r'^VERSION\s*=\s*"([^"]+)"$', metrics_text, re.MULTILINE)
-    versions = {project_match.group(1) if project_match else None, metrics_match.group(1) if metrics_match else None}
-    if versions != {VERSION}:
-        fail(f"project and metrics versions must both be {VERSION}: {versions}")
+    versions = {
+        "project": project_match.group(1) if project_match else None,
+        "metrics": metrics_match.group(1) if metrics_match else None,
+        "claude_plugin": claude_plugin.get("version"),
+        "claude_marketplace": claude_entries[0].get("version"),
+        "codex_plugin": codex_plugin.get("version"),
+    }
+    if set(versions.values()) != {VERSION}:
+        fail(f"project, tooling, and plugin versions must all be {VERSION}: {versions}")
 
     cases = json.loads((ROOT / "evals" / "cases.json").read_text(encoding="utf-8"))
     if cases.get("skill") != "skills/humanize-japanese/SKILL.md":
@@ -199,7 +241,7 @@ def main() -> int:
         if required_phrase not in register_guide:
             fail(f"register guide is missing: {required_phrase}")
 
-    print("Portable Agent Skill validation passed")
+    print("Portable Agent Skill plugin package validation passed")
     return 0
 
 

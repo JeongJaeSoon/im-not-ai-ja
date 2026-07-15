@@ -43,6 +43,18 @@ class PortableSkillStructureTests(unittest.TestCase):
         skill_files = list(ROOT.rglob("SKILL.md"))
         self.assertEqual(skill_files, [SKILL_ROOT / "SKILL.md"])
 
+    def test_plugin_manifests_share_the_canonical_skill(self) -> None:
+        claude_plugin = json.loads(
+            (ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+        codex_plugin = json.loads(
+            (ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(claude_plugin["name"], "humanize-japanese")
+        self.assertEqual(codex_plugin["name"], "humanize-japanese")
+        self.assertEqual(claude_plugin["skills"], ["./skills"])
+        self.assertEqual(codex_plugin["skills"], "./skills")
+
 
 if __name__ == "__main__":
     unittest.main()

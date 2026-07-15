@@ -1,6 +1,6 @@
 # Skill evals
 
-`humanize-japanese` のcanonical Agent Skillを実際にモデルへ適用し、レジスター、敬語判断、意味保存を回帰テストするための仕組みです。自然さをモデル自身の主観点だけで採点せず、ケースごとに宣言した契約を決定論的に検証します。評価対象は `skills/humanize-japanese/SKILL.md` と、その相対参照先だけです。
+`humanize-japanese` の正本となるAgent Skillを実際にモデルへ適用し、レジスター、敬語判断、意味保存を回帰テストするための仕組みです。自然さをモデル自身の主観点だけで採点せず、ケースごとに宣言した契約を決定論的に検証します。モデルの評価対象は `skills/humanize-japanese/SKILL.md` とその相対参照先だけで、パッケージ検証ではClaude CodeとCodexの両マニフェストがこの単一スキルを参照していることも確認します。
 
 ## 構成
 
@@ -9,7 +9,7 @@
 - `validate_results.py`: 数値、URL、コード、引用、明示的な固有名詞、モダリティ、レジスター、finding IDを検証するゲート。
 - `fixtures/reference-results.json`: validator自体をテストする既知の合格結果。
 - `.github/workflows/skill-eval.yml`: Claude Code Action v1でskillを実行し、結果とレポートをartifactに保存するworkflow。
-- `tests/test_structure.py`: skillを単独directoryへcopyしても相対参照とmetricsが動くことを確認するportable structure test。
+- `tests/test_structure.py`: スキルを単独ディレクトリへコピーしても相対参照とmetricsが動くこと、および両プラグインマニフェストが同じ `skills/` を指すことを確認するポータブル構造テスト。
 
 現在のケースは、R0/R1/R2/R3、`です・ます`、許可・受益がある/ない`させていただく`、正式通知の`ご了承ください`、敬語の行為者、二重敬語、無修正成功、固有名詞・数値・引用・モダリティの同時保護を含みます。
 
@@ -22,6 +22,7 @@ python3 evals/validate_results.py \
   --results evals/fixtures/reference-results.json
 python3 scripts/validate_repo.py
 python3 -m unittest discover -s tests -v
+claude plugin validate . --strict
 ```
 
 ## GitHub Actionsの設定
@@ -64,7 +65,7 @@ gh variable set ENABLE_CLAUDE_EVALS \
   --body true
 ```
 
-workflowは最初にAgent Skills標準構造、相対参照、eval fixtureをAPIなしで検証します。その後、repositoryの読み取り専用 `GITHUB_TOKEN` をClaude Code Actionへ明示的に渡します。そのため、このevalだけのためにClaude GitHub Appへ他repositoryにも及ぶ広い書き込み権限を付与する必要はありません。fork由来のPull Requestではsecretを渡さず、model evalを実行しません。通常の決定論的テストは常に実行されます。
+workflowは最初にAgent Skills標準構造、Claude Code / Codexのプラグインマニフェスト、相対参照、評価fixtureをAPIなしで検証します。その後、リポジトリの読み取り専用 `GITHUB_TOKEN` をClaude Code Actionへ明示的に渡します。そのため、この評価だけのためにClaude GitHub Appへ他のリポジトリにも及ぶ広い書き込み権限を付与する必要はありません。fork由来のPull Requestではsecretを渡さず、モデル評価を実行しません。通常の決定論的テストは常に実行されます。
 
 ## モデル選択
 
@@ -88,4 +89,4 @@ workflowは最初にAgent Skills標準構造、相対参照、eval fixtureをAPI
 
 出力本文、ケース別エラー、変更率、contract integrityは14日間のartifactとして保存されます。OAuth tokenとAPI keyはartifactやpromptへ書き込みません。
 
-このmodel evalの実行ホストはClaude Codeですが、評価対象はランタイム固有のClaude版ではなくcanonical Agent Skillです。Codex互換性は、skill directoryを単独でcopyしても相対参照が解決すること、skillが特定製品の配置やツール名を必須にしないことをCIで保証します。
+このモデル評価の実行ホストはClaude Codeですが、評価対象はClaude固有の別版ではなく正本となるAgent Skillです。両実行環境のプラグインマニフェストは同じ `skills/` を参照し、スキルディレクトリを単独でコピーしても相対参照が解決すること、スキルが特定製品の配置やツール名を必須にしないことをCIで保証します。

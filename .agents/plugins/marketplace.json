@@ -1,0 +1,17 @@
+{
+  "name": "im-not-ai-ja",
+  "interface": {
+    "displayName": "Humanize JA"
+  },
+  "plugins": [
+    {
+      "name": "humanize-japanese",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "description": "文脈、意味、レジスターを保ちながら、日本語のAIらしい不自然さを整えるAgent Skill。",
+      "category": "Productivity"
+    }
+  ]
+}

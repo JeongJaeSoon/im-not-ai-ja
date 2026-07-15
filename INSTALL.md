@@ -1,80 +1,63 @@
 # Installation
 
-Claude CodeとCodexは、どちらも同じ `skills/humanize-japanese/` をインストールします。ランタイム別のskill本文やagent定義はありません。
+Claude CodeとCodexは、どちらも同じ `skills/humanize-japanese/` を含むプラグインをインストールします。実行環境別のスキル本文やエージェント定義はありません。
 
-## 1. Repositoryを取得する
+## 1. Claude Code
 
-```bash
-git clone https://github.com/JeongJaeSoon/im-not-ai-ja.git
-cd im-not-ai-ja
-```
-
-## 2. Claude Codeの標準path
-
-Claude Codeの公式skill locationは次のとおりです。
-
-- User scope: `~/.claude/skills/humanize-japanese/SKILL.md`
-- Project scope: `<project>/.claude/skills/humanize-japanese/SKILL.md`
-
-User scopeへsymlinkする場合:
+マーケットプレイスを登録し、プラグインをインストールします。
 
 ```bash
-mkdir -p ~/.claude/skills
-ln -s "$(pwd)/skills/humanize-japanese" ~/.claude/skills/humanize-japanese
+claude plugin marketplace add JeongJaeSoon/im-not-ai-ja
+claude plugin install humanize-japanese@im-not-ai-ja
 ```
 
-Project scopeへsymlinkする場合は、対象projectのrootで実行します。
+新しいセッションで自然な文章で依頼するか、`/humanize-japanese:humanize-japanese` と明示して実行します。反映されない場合は `/reload-plugins` を実行するか、Claude Codeを再起動してください。
+
+更新:
 
 ```bash
-mkdir -p .claude/skills
-ln -s "/absolute/path/to/im-not-ai-ja/skills/humanize-japanese" \
-  .claude/skills/humanize-japanese
+claude plugin marketplace update im-not-ai-ja
+claude plugin update humanize-japanese@im-not-ai-ja
 ```
 
-新しいClaude Code sessionで `/humanize-japanese` を実行します。追加が反映されない場合はsessionを再起動してください。
-
-公式資料: [Claude Code skills](https://code.claude.com/docs/en/skills)
-
-## 3. Codexの標準path
-
-Codexの公式skill locationは次のとおりです。
-
-- User scope: `~/.agents/skills/humanize-japanese/SKILL.md`
-- Repository scope: `<project>/.agents/skills/humanize-japanese/SKILL.md`
-
-User scopeへsymlinkする場合:
+削除:
 
 ```bash
-mkdir -p ~/.agents/skills
-ln -s "$(pwd)/skills/humanize-japanese" ~/.agents/skills/humanize-japanese
+claude plugin uninstall humanize-japanese@im-not-ai-ja
 ```
 
-Repository scopeへsymlinkする場合は、対象repositoryのrootで実行します。
+公式資料: [Claude Code plugins](https://code.claude.com/docs/en/plugins)、[Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)
+
+## 2. Codex
+
+同じリポジトリをマーケットプレイスとして登録し、同じ名前のプラグインをインストールします。
 
 ```bash
-mkdir -p .agents/skills
-ln -s "/absolute/path/to/im-not-ai-ja/skills/humanize-japanese" \
-  .agents/skills/humanize-japanese
+codex plugin marketplace add JeongJaeSoon/im-not-ai-ja
+codex plugin add humanize-japanese@im-not-ai-ja
 ```
 
-新しいCodex sessionで `$humanize-japanese` を指定するか、`/skills` で一覧を確認します。追加が反映されない場合はCodexを再起動してください。
+新しいセッションで自然な文章で依頼するか、`$humanize-japanese:humanize-japanese` と明示して実行します。反映されない場合はCodexを再起動してください。
 
-公式資料: [Codex skills](https://developers.openai.com/codex/skills)
-
-## 4. Copy mode
-
-symlinkを使えない場合はskill directory全体をcopyします。
+更新:
 
 ```bash
-cp -R skills/humanize-japanese ~/.claude/skills/humanize-japanese
-cp -R skills/humanize-japanese ~/.agents/skills/humanize-japanese
+codex plugin marketplace upgrade im-not-ai-ja
+codex plugin remove humanize-japanese@im-not-ai-ja
+codex plugin add humanize-japanese@im-not-ai-ja
 ```
 
-copy modeでは二つの独立したcopyができるため、更新時に両方を入れ直してください。symlink modeではこのrepositoryで `git pull --ff-only` すれば両方へ反映されます。
+削除:
 
-## 5. 任意のcross-agent installer
+```bash
+codex plugin remove humanize-japanese@im-not-ai-ja
+```
 
-Claude CodeやCodexの公式機能ではありませんが、[skills CLI](https://github.com/vercel-labs/skills) を使うと両方へ同時に入れられます。
+公式資料: [Plugins in Codex](https://help.openai.com/en/articles/20001256-plugins-in-codex)
+
+## 3. 代替: 共通スキルインストーラー
+
+プラグイン機能を使えない環境では、[skills CLI](https://github.com/vercel-labs/skills) で両方へスキル本体を直接インストールできます。Claude CodeやCodexの公式プラグイン機能ではありません。
 
 ```bash
 npx skills add JeongJaeSoon/im-not-ai-ja \
@@ -84,8 +67,6 @@ npx skills add JeongJaeSoon/im-not-ai-ja \
   --agent codex \
   --yes
 ```
-
-symlinkを使えない環境では `--copy` を追加します。
 
 skills CLIで入れた場合の更新と削除:
 
@@ -98,19 +79,51 @@ npx skills remove humanize-japanese \
   --yes
 ```
 
-## 6. 旧構成からの移行
+## 4. ローカル開発
 
-以前のversionでrepository内の `.claude/skills/`、`.codex/skills/`、`codex/skills/`、または `agents/` を直接参照するlinkを作った場合、そのlinkは純粋なAgent Skill構成への移行後には使いません。`readlink` で自分の旧linkであることを確認して削除し、このページの標準pathへ入れ直してください。
+未公開の変更を試す場合だけリポジトリをクローンし、各実行環境のスキル配置先へシンボリックリンクできます。通常の利用ではこの手順は不要です。
 
-Claude Code plugin marketplace版を入れていた場合も、旧pluginを無効化または削除してからAgent Skillとして入れ直します。同名の旧plugin skillと新しいuser skillを同時に有効にしないでください。
+```bash
+git clone https://github.com/JeongJaeSoon/im-not-ai-ja.git
+cd im-not-ai-ja
+mkdir -p ~/.claude/skills ~/.agents/skills
+ln -s "$(pwd)/skills/humanize-japanese" ~/.claude/skills/humanize-japanese
+ln -s "$(pwd)/skills/humanize-japanese" ~/.agents/skills/humanize-japanese
+```
 
-## 7. 手動アンインストール
-
-symlink modeの場合は、自分が作成したlinkであることを `readlink` で確認してから削除します。
+プラグイン版と直接インストール版を同時に有効にすると、同じスキルが重複して見える場合があります。動作確認が終わったら、自分が作成したリンクであることを `readlink` で確認して削除してください。
 
 ```bash
 unlink ~/.claude/skills/humanize-japanese
 unlink ~/.agents/skills/humanize-japanese
 ```
 
-copy modeの場合は、必要なファイルを退避した後、各copyを手動で削除してください。
+## 5. パッケージの開発者向け検証
+
+Claude Codeのマニフェストとマーケットプレイスは公式validatorで検証できます。
+
+```bash
+claude plugin validate . --strict
+```
+
+Codexは隔離した一時的な `CODEX_HOME` で、実際の登録とインストールを確認できます。
+
+```bash
+export CODEX_HOME="$(mktemp -d)"
+codex plugin marketplace add ./ --json
+codex plugin add humanize-japanese@im-not-ai-ja --json
+codex plugin list --json
+```
+
+リポジトリ共通の構造、バージョン同期、単一 `SKILL.md`、評価コーパスは次のコマンドで検証します。
+
+```bash
+python3 scripts/validate_repo.py
+python3 -m unittest discover -s tests -v
+python3 evals/validate_results.py \
+  --results evals/fixtures/reference-results.json
+```
+
+## 6. 旧構成からの移行
+
+以前のバージョンで `.claude/skills/`、`.agents/skills/`、`.codex/skills/`、`codex/skills/`、または `agents/` へのリンクやコピーを作った場合は、それが自分で追加したものか確認してから削除し、プラグインとして入れ直してください。同名の直接スキルとプラグインスキルを同時に有効にしないでください。
