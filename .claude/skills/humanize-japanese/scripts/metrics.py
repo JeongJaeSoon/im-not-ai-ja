@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 DEFAULT_THRESHOLDS: dict[str, float | int] = {
     "min_sentences": 5,
@@ -61,7 +61,9 @@ ENDING_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
     (
         "casual",
-        re.compile(r"(?:じゃない|じゃん|だよね|だよ|だね|よね|かも|かな|してる)$"),
+        re.compile(
+            r"(?:じゃない|じゃん|だよね|だよ|だね|よね|かも|かな|してる|よ|ね)$"
+        ),
     ),
     (
         "plain",
@@ -73,11 +75,17 @@ ENDING_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 SIGNATURE_PATTERNS: dict[str, re.Pattern[str]] = {
-    "A-1": re.compile(r"(?:^|[。！？!?]\s*)(?:私は|私たちは|我々は|本稿は|本記事は)"),
+    "A-1": re.compile(
+        r"(?:^|[。！？!?]\s*)(?:私は|私たちは|我々は|本稿(?:は|では)|本記事(?:は|では))"
+    ),
     "A-7": re.compile(r"することができ(?:ます|る)"),
     "B-1": re.compile(r"することで"),
     "B-2": re.compile(r"だけでなく.{0,40}?も"),
-    "B-3": re.compile(r"(?:から|を超えて).{1,30}?(?:へ|に)"),
+    "B-3": re.compile(
+        r"(?:効率化|標準化|自動化|最適化|管理|運用|ツール|機能|製品|サービス|手段|作業)"
+        r"(?:から|を超えて)[^。！？!?\n]{0,24}?"
+        r"(?:価値|価値創造|体験|パートナー|戦略|未来|変革|成果)(?:へ|に)"
+    ),
     "C-1": re.compile(r"包括的|多角的|効果的|革新的|持続可能|シームレス"),
     "C-2": re.compile(r"極めて重要|非常に重要|不可欠|画期的|大きな一歩"),
     "C-3": re.compile(r"(?:推進|促進|醸成|構築|実現)(?:を|の|し|する|して){0,2}"),
@@ -120,6 +128,30 @@ PROTECTED_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\d+(?:[.,]\d+)*(?:%|％|円|年|月|日|時|分|秒|件|人|個|倍|GB|MB|kg|km)?"),
 )
 
+MODALITY_PATTERNS: dict[str, re.Pattern[str]] = {
+    "negation": re.compile(
+        r"(?:ない|なかった|ません|ませんでした|できない|不可|禁止|未(?:実施|対応|完了))"
+    ),
+    "possibility": re.compile(
+        r"(?:かもしれ|可能性|おそれ|恐れ|場合があり|場合があります|見込み|得る|うる|でしょう|だろう)"
+    ),
+    "obligation": re.compile(
+        r"(?:なければならない|なくてはならない|必要がある|必要です|べき|義務|必須)"
+    ),
+    "condition": re.compile(
+        r"(?:場合|とき|際|条件|限り|ならば|であれば|のであれば|とすれば|れば[、,]|たら[、,]|なら[、,])"
+    ),
+}
+
+QUOTED_CONTENT_PATTERN = re.compile(r"「[^「」]*」|『[^『』]*』|\"[^\"\n]*\"")
+
+
+@dataclass(frozen=True)
+class MatchSpan:
+    text: str
+    start: int
+    end: int
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -129,6 +161,7 @@ class Finding:
     count: int
     reason: str
     note: str = ""
+    matches: tuple[MatchSpan, ...] = ()
 
 
 def strip_nonprose(text: str) -> str:
@@ -138,6 +171,33 @@ def strip_nonprose(text: str) -> str:
     text = re.sub(r"https?://\S+", " ", text)
     text = re.sub(r"^\s*\|.*\|\s*$", " ", text, flags=re.MULTILINE)
     return text
+
+
+def strip_quoted_content(text: str) -> tuple[str, int]:
+    """Exclude quoted voices from document-level register metrics."""
+    matches = list(QUOTED_CONTENT_PATTERN.finditer(text))
+    return QUOTED_CONTENT_PATTERN.sub(" ", text), len(matches)
+
+
+def mask_do_not_spans(text: str) -> str:
+    """Mask protected/non-prose spans while preserving original offsets."""
+
+    def spaces(match: re.Match[str]) -> str:
+        return " " * len(match.group(0))
+
+    masked = re.sub(r"```.*?```", spaces, text, flags=re.DOTALL)
+    masked = re.sub(r"`[^`]*`", spaces, masked)
+    masked = re.sub(r"https?://\S+", spaces, masked)
+    masked = QUOTED_CONTENT_PATTERN.sub(spaces, masked)
+    masked = re.sub(r"^\s*\|.*\|\s*$", spaces, masked, flags=re.MULTILINE)
+    return masked
+
+
+def match_spans(pattern: re.Pattern[str], text: str) -> tuple[MatchSpan, ...]:
+    return tuple(
+        MatchSpan(text=match.group(0), start=match.start(), end=match.end())
+        for match in pattern.finditer(text)
+    )
 
 
 def split_sentences(text: str) -> list[str]:
@@ -228,7 +288,9 @@ def analyze_text(text: str, baseline: str | Path | None = None) -> dict[str, Any
     )
     connector_ratio = safe_ratio(connector_count, len(sentences))
 
-    ending_pairs = [classify_ending(sentence) for sentence in sentences]
+    register_prose, quoted_segments_excluded = strip_quoted_content(prose)
+    register_sentences = split_sentences(register_prose)
+    ending_pairs = [classify_ending(sentence) for sentence in register_sentences]
     ending_type_counts = Counter(label for label, _ in ending_pairs)
     ending_surface_counts = Counter(surface for _, surface in ending_pairs if surface)
     classified_count = sum(count for label, count in ending_type_counts.items() if label != "other")
@@ -245,8 +307,9 @@ def analyze_text(text: str, baseline: str | Path | None = None) -> dict[str, Any
     )
     top_ending_share = safe_ratio(max(ending_surface_counts.values(), default=0), len(sentences))
 
-    patterns = pattern_counts(prose)
-    honorifics = honorific_counts(prose)
+    finding_text = mask_do_not_spans(text)
+    patterns = pattern_counts(finding_text)
+    honorifics = honorific_counts(finding_text)
     findings: list[Finding] = []
     minimum = int(thresholds["min_sentences"])
     cv = coefficient_of_variation(lengths)
@@ -296,8 +359,10 @@ def analyze_text(text: str, baseline: str | Path | None = None) -> dict[str, Any
         )
 
     strong_ids = {"C-1", "C-2", "D-2", "E-5", "E-6", "F-6", "I-1", "I-2", "I-3", "I-5"}
-    for pattern_id, count in patterns.items():
-        if not count:
+    for pattern_id, pattern in SIGNATURE_PATTERNS.items():
+        spans = match_spans(pattern, finding_text)
+        count = len(spans)
+        if not spans:
             continue
         severity = "S1" if pattern_id in strong_ids and count >= 2 else "S2"
         findings.append(
@@ -308,40 +373,47 @@ def analyze_text(text: str, baseline: str | Path | None = None) -> dict[str, Any
                 count,
                 f"{pattern_id} の候補を {count} 件検出",
                 "一回の一致だけなら文脈確認を優先する",
+                spans,
             )
         )
 
     if honorifics["double_honorific_candidate"]:
+        spans = match_spans(HONORIFIC_PATTERNS["double_honorific_candidate"], finding_text)
         findings.append(
             Finding(
-                "E-2",
+                "E-9",
                 "S1",
                 "span",
                 honorifics["double_honorific_candidate"],
                 "尊敬語・謙譲語の重なり候補",
                 "行為者と向かう先を確認する",
+                spans,
             )
         )
     if honorifics["sasete_itadaku"]:
+        spans = match_spans(HONORIFIC_PATTERNS["sasete_itadaku"], finding_text)
         findings.append(
             Finding(
-                "E-2",
+                "E-7",
                 "S2",
                 "span",
                 honorifics["sasete_itadaku"],
                 "「させていただく」の場面適合性を要確認",
                 "許可と受益があれば保持する。出現自体はAI tellではない",
+                spans,
             )
         )
     if honorifics["go_ryosho"]:
+        spans = match_spans(HONORIFIC_PATTERNS["go_ryosho"], finding_text)
         findings.append(
             Finding(
-                "E-2",
+                "E-8",
                 "S2",
                 "span",
                 honorifics["go_ryosho"],
                 "「ご了承ください」が読み手との距離に合うか要確認",
                 "制約受容の正式通知なら保持する",
+                spans,
             )
         )
 
@@ -375,6 +447,7 @@ def analyze_text(text: str, baseline: str | Path | None = None) -> dict[str, Any
             "top_endings": ending_surface_counts.most_common(8),
             "mix_ratio_descriptive_only": register_mix_ratio,
             "honorific_counts": honorifics,
+            "quoted_segments_excluded": quoted_segments_excluded,
             "note": "Polite density and mixing are descriptive, not AI tells.",
         },
         "pattern_counts": patterns,
@@ -390,18 +463,70 @@ def protected_tokens(text: str) -> Counter[str]:
     return Counter(tokens)
 
 
-def compare_texts(before: str, after: str) -> dict[str, Any]:
+def explicit_protected_tokens(text: str, protected: Iterable[str]) -> Counter[str]:
+    tokens: Counter[str] = Counter()
+    for token in protected:
+        if token:
+            if re.search(r"[A-Za-z0-9]", token):
+                pattern = re.compile(
+                    rf"(?<![A-Za-z0-9_.-]){re.escape(token)}(?![A-Za-z0-9_.-])"
+                )
+                tokens[token] = len(pattern.findall(text))
+            else:
+                tokens[token] = text.count(token)
+    return tokens
+
+
+def modality_categories(text: str) -> set[str]:
+    categories: set[str] = set()
+    for name, pattern in MODALITY_PATTERNS.items():
+        target = text
+        if name == "negation":
+            target = re.sub(r"かもしれ(?:ません|ない)", "かもしれ", target)
+        if pattern.search(target):
+            categories.add(name)
+    return categories
+
+
+def compare_texts(
+    before: str,
+    after: str,
+    protected: Iterable[str] = (),
+) -> dict[str, Any]:
     before_tokens = protected_tokens(before)
     after_tokens = protected_tokens(after)
     removed = list((before_tokens - after_tokens).elements())
     added = list((after_tokens - before_tokens).elements())
+    explicit_before = explicit_protected_tokens(before, protected)
+    explicit_after = explicit_protected_tokens(after, protected)
+    explicit_removed = list((explicit_before - explicit_after).elements())
+    explicit_added = list((explicit_after - explicit_before).elements())
+    modality_before = modality_categories(before)
+    modality_after = modality_categories(after)
+    modality_removed = sorted(modality_before - modality_after)
+    modality_added = sorted(modality_after - modality_before)
+    protected_integrity = not removed and not added and not explicit_removed and not explicit_added
+    modality_integrity = not modality_removed and not modality_added
+    short_sample = visible_length(before) < 100 or len(split_sentences(before)) < 5
     return {
         "change_rate": round(1 - SequenceMatcher(None, before, after).ratio(), 4),
         "characters_before": visible_length(before),
         "characters_after": visible_length(after),
+        "short_sample": short_sample,
+        "change_rate_policy": (
+            "reference_only_for_short_sample" if short_sample else "warn_over_0.30_stop_over_0.50"
+        ),
         "protected_removed": removed,
         "protected_added": added,
-        "protected_integrity": not removed and not added,
+        "explicit_protected_removed": explicit_removed,
+        "explicit_protected_added": explicit_added,
+        "protected_integrity": protected_integrity,
+        "modality_before": sorted(modality_before),
+        "modality_after": sorted(modality_after),
+        "modality_removed": modality_removed,
+        "modality_added": modality_added,
+        "modality_integrity": modality_integrity,
+        "contract_integrity": protected_integrity and modality_integrity,
     }
 
 
@@ -415,6 +540,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", help="UTF-8 text/Markdown path, or - for stdin")
     parser.add_argument("--compare", metavar="AFTER", help="Compare protected tokens and change rate")
+    parser.add_argument(
+        "--protect",
+        action="append",
+        default=[],
+        metavar="TEXT",
+        help="Exact protected term; repeat for names and product identifiers",
+    )
     parser.add_argument("--baseline", help="Optional baseline JSON")
     parser.add_argument("--compact", action="store_true", help="Print compact JSON")
     return parser
@@ -427,7 +559,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.compare:
         after = read_text(args.compare)
         output["after_analysis"] = analyze_text(after, args.baseline)
-        output["comparison"] = compare_texts(before, after)
+        output["comparison"] = compare_texts(before, after, args.protect)
     json.dump(output, sys.stdout, ensure_ascii=False, indent=None if args.compact else 2)
     sys.stdout.write("\n")
     return 0

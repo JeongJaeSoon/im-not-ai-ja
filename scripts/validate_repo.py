@@ -53,6 +53,11 @@ def main() -> int:
         ".claude/skills/humanize-japanese/references/register-guide.md",
         ".claude/skills/humanize-japanese/scripts/metrics.py",
         "codex/skills/humanize-japanese/SKILL.md",
+        "evals/cases.json",
+        "evals/result.schema.json",
+        "evals/fixtures/reference-results.json",
+        "evals/validate_results.py",
+        ".github/workflows/skill-eval.yml",
     ]
     for relative in required:
         if not (ROOT / relative).exists():
@@ -60,6 +65,29 @@ def main() -> int:
     for path in ROOT.rglob("*.json"):
         if ".git" not in path.parts:
             validate_json(path)
+    result_schema = json.loads((ROOT / "evals" / "result.schema.json").read_text(encoding="utf-8"))
+    runtime_schema = {
+        key: value for key, value in result_schema.items() if key not in {"$schema", "title"}
+    }
+    compact_schema = json.dumps(runtime_schema, ensure_ascii=False, separators=(",", ":"))
+    eval_workflow = (ROOT / ".github" / "workflows" / "skill-eval.yml").read_text(
+        encoding="utf-8"
+    )
+    if f"--json-schema '{compact_schema}'" not in eval_workflow:
+        fail("skill-eval workflow JSON schema is out of sync with evals/result.schema.json")
+    plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    marketplace = json.loads(
+        (ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+    )
+    gemini = json.loads((ROOT / "gemini-extension.json").read_text(encoding="utf-8"))
+    versions = {
+        plugin.get("version"),
+        marketplace.get("metadata", {}).get("version"),
+        marketplace.get("plugins", [{}])[0].get("version"),
+        gemini.get("version"),
+    }
+    if versions != {"0.2.0"}:
+        fail(f"manifest versions must all be 0.2.0: {sorted(str(item) for item in versions)}")
     for path in ROOT.rglob("SKILL.md"):
         validate_skill(path)
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -78,8 +106,8 @@ def main() -> int:
     ).read_text(encoding="utf-8")
     pattern_ids = re.findall(r"^\| ([A-I]-\d+) \|", taxonomy, flags=re.MULTILINE)
     guard_ids = re.findall(r"^\| (J-\d+) \|", taxonomy, flags=re.MULTILINE)
-    if len(pattern_ids) + len(guard_ids) != 56:
-        fail(f"taxonomy must contain 56 entries, found {len(pattern_ids) + len(guard_ids)}")
+    if len(pattern_ids) + len(guard_ids) != 59:
+        fail(f"taxonomy must contain 59 entries, found {len(pattern_ids) + len(guard_ids)}")
     register_guide = (
         ROOT
         / ".claude"

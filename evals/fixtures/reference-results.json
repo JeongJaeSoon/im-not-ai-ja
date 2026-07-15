@@ -1,0 +1,108 @@
+{
+  "results": [
+    {
+      "case_id": "r0_friend_register",
+      "register": "R0",
+      "output": "明日の映画、19時からだよ。仕事が終わってからでも間に合うし、駅前でご飯も食べられるよ。チケットはもう変更できないから、そこだけわかっておいてね。",
+      "grade": "A",
+      "findings": [
+        {"id": "D-2", "before": "これにより", "after": "", "reason": "会話では因果が明白"},
+        {"id": "E-8", "before": "ご了承ください", "after": "わかっておいてね", "reason": "友人向けR0に合わせる"}
+      ],
+      "kept": [],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r1_academic_fidelity",
+      "register": "R1",
+      "output": "本稿では、2024年に収集した120件の回答を分析し、年齢層別に比較する。その結果、年齢層ごとの差が示される。ただし、本稿では、この結果が因果関係を示すものではないと考える。",
+      "grade": "A",
+      "findings": [
+        {"id": "A-1", "before": "本稿は", "after": "本稿では", "reason": "同一主語の反復を縮約"},
+        {"id": "D-2", "before": "これにより", "after": "その結果", "reason": "分析結果との関係を明示"},
+        {"id": "I-1", "before": "浮き彫りになる", "after": "示される", "reason": "学術文に直接的な表現を使う"}
+      ],
+      "kept": [],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r2_polite_not_ai_tell",
+      "register": "R2",
+      "output": "このアプリでは、毎日の支出を記録できます。入力内容は端末内に保存され、カテゴリは後から変更できます。月ごとの合計も確認でき、データはCSV形式で書き出せます。操作はとても簡単です。",
+      "grade": "A",
+      "findings": [
+        {"id": "E-1", "before": "ます文末の連続", "after": "意味単位で接続", "reason": "丁寧体は維持して文末反復だけを調整"},
+        {"id": "G-1", "before": "均一な短文", "after": "長さに変化を付けた文", "reason": "6文あるため補助指標を適用"}
+      ],
+      "kept": [],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r3_sasete_keep",
+      "register": "R3",
+      "output": "このたびは登壇の機会をいただき、ありがとうございます。事前にご承認いただいた資料を使用し、本日のセミナーで発表させていただきます。",
+      "grade": "A",
+      "findings": [],
+      "kept": [{"text": "発表させていただきます", "reason": "主催者の許可と登壇機会による受益がある"}],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r3_sasete_simplify",
+      "register": "R3",
+      "output": "本日、当社は新機能を公開いたします。",
+      "grade": "A",
+      "findings": [{"id": "E-7", "before": "公開させていただきます", "after": "公開いたします", "reason": "許可・受益関係のない一方的通知"}],
+      "kept": [],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r3_notice_ryosho_keep",
+      "register": "R3",
+      "output": "7月20日22時から23時まで、システムメンテナンスのためサービスをご利用いただけません。お急ぎの場合はサポート窓口へご連絡ください。あらかじめご了承ください。",
+      "grade": "A",
+      "findings": [],
+      "kept": [{"text": "ご了承ください", "reason": "時間と制約と問い合わせ先がある正式通知"}],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r3_honorific_actor",
+      "register": "R3",
+      "output": "添付資料をご覧ください。",
+      "grade": "A",
+      "findings": [{"id": "E-9", "before": "拝見してください", "after": "ご覧ください", "reason": "相手の行為には尊敬語を使う"}],
+      "kept": [],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r3_adversarial_contract",
+      "register": "R3",
+      "output": "株式会社青空の佐藤美咲です。2026年7月15日、Project KAIのAPI v2.4を公開いたします。詳細は https://example.jp/docs?v=2.4 をご覧ください。`retryCount` は3回、月額は12,800円、処理時間は50%短縮できる可能性があります。友人の田中健は「これ、まだ本番では使わないでね。障害時は`safeMode`をtrueにして」と言ってたじゃん。本機能は試験提供です。予告なく停止する場合がありますので、ご了承ください。お問い合わせには私が回答いたします。",
+      "grade": "A",
+      "findings": [
+        {"id": "E-7", "before": "公開させていただきます", "after": "公開いたします", "reason": "一方的な公開通知"},
+        {"id": "E-4", "before": "可能性があるかもしれないと考えられます", "after": "可能性があります", "reason": "可能性を残して多重ヘッジを整理"},
+        {"id": "E-2", "before": "回答するよね", "after": "回答いたします", "reason": "本文のR3へ戻す"}
+      ],
+      "kept": [{"text": "ご了承ください", "reason": "試験提供の停止可能性を知らせる正式通知"}],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r2_noop_success",
+      "register": "R2",
+      "output": "明日の受付は10時です。会場は東京国際フォーラムです。",
+      "grade": "A",
+      "findings": [],
+      "kept": [],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    },
+    {
+      "case_id": "r3_double_honorific",
+      "register": "R3",
+      "output": "部長がお読みになりました。",
+      "grade": "A",
+      "findings": [{"id": "E-9", "before": "お読みになられました", "after": "お読みになりました", "reason": "二重敬語を一段にする"}],
+      "kept": [],
+      "self_check": {"facts": true, "modality": true, "register": true, "no_invention": true}
+    }
+  ]
+}

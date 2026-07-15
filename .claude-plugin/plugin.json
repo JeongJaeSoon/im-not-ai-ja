@@ -1,6 +1,6 @@
 {
   "name": "humanize-japanese",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI下書きの意味とレジスターを保ちながら、日本語固有の文体・リズム・表現を整える。",
   "author": {
     "name": "JeongJaeSoon"

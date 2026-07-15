@@ -1,0 +1,122 @@
+name: skill-eval
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Claude model used to execute the skill
+        required: true
+        default: claude-sonnet-4-6
+        type: choice
+        options:
+          - claude-sonnet-4-6
+          - claude-opus-4-8
+  pull_request:
+    paths:
+      - ".claude/skills/humanize-japanese/**"
+      - "codex/skills/humanize-japanese/**"
+      - "evals/**"
+      - "tests/**"
+      - ".github/workflows/skill-eval.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".claude/skills/humanize-japanese/**"
+      - "codex/skills/humanize-japanese/**"
+      - "evals/**"
+      - "tests/**"
+      - ".github/workflows/skill-eval.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-eval-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  corpus:
+    name: Validate eval corpus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Validate reference fixture
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: >-
+          python3 evals/validate_results.py
+          --results evals/fixtures/reference-results.json
+
+  model-eval:
+    name: Claude skill contract eval
+    needs: corpus
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (vars.ENABLE_CLAUDE_EVALS == 'true' &&
+          (github.event_name != 'pull_request' ||
+            github.event.pull_request.head.repo.full_name == github.repository))
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Require Anthropic API key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::Set the ANTHROPIC_API_KEY repository secret before running model evals."
+            exit 1
+          fi
+
+      - name: Execute humanize-japanese skill
+        id: claude_eval
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            This is a read-only regression eval for the repository's humanize-japanese skill.
+
+            1. Read `.claude/skills/humanize-japanese/SKILL.md` and every reference it tells you to read.
+            2. Read `evals/cases.json`.
+            3. Apply the skill independently to every case. Respect each case's context and target register.
+            4. Preserve all protected content and modality. Do not invent facts, sources, apologies, emotions, or experiences.
+            5. Use only taxonomy IDs that exist in the repository. Report only actual findings. A justified no-op is valid.
+            6. For a kept expression listed by the case, add it to `kept` with a concrete contextual reason.
+            7. Return one result for every case, in the same order and with the exact case_id.
+
+            Do not edit repository files, run shell commands, access the network, or comment on GitHub.
+            Return only the structured result requested by the JSON schema.
+          claude_args: |
+            --model ${{ inputs.model || 'claude-sonnet-4-6' }}
+            --max-turns 12
+            --disallowedTools "Bash,Edit,Write,NotebookEditCell,WebFetch,WebSearch"
+            --json-schema '{"type":"object","additionalProperties":false,"required":["results"],"properties":{"results":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["case_id","register","output","grade","findings","kept","self_check"],"properties":{"case_id":{"type":"string"},"register":{"type":"string","enum":["R0","R1","R2","R3","R4"]},"output":{"type":"string"},"grade":{"type":"string","enum":["A","B","C","D"]},"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["id","before","after","reason"],"properties":{"id":{"type":"string"},"before":{"type":"string"},"after":{"type":"string"},"reason":{"type":"string"}}}},"kept":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["text","reason"],"properties":{"text":{"type":"string"},"reason":{"type":"string"}}}},"self_check":{"type":"object","additionalProperties":false,"required":["facts","modality","register","no_invention"],"properties":{"facts":{"type":"boolean"},"modality":{"type":"boolean"},"register":{"type":"boolean"},"no_invention":{"type":"boolean"}}}}}}}}'
+
+      - name: Validate Claude structured output
+        env:
+          CLAUDE_STRUCTURED_OUTPUT: ${{ steps.claude_eval.outputs.structured_output }}
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python3 evals/validate_results.py \
+            --results-env CLAUDE_STRUCTURED_OUTPUT \
+            --write-results evals/results/claude.json \
+            --report evals/results/report.json \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload eval evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: humanize-japanese-eval-${{ inputs.model || 'claude-sonnet-4-6' }}
+          path: evals/results/
+          if-no-files-found: warn
+          retention-days: 14
