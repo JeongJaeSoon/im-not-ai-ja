@@ -88,7 +88,7 @@ python3 .claude/skills/humanize-japanese/scripts/metrics.py before.md --compare 
 
 `evals/cases.json` に、R0〜R3、`です・ます`、`させていただく`、`ご了承ください`、敬語の行為者、固有名詞・数値・引用・モダリティ保護を含む回帰ケースがあります。
 
-通常のCIではAPI不要のvalidatorとfixtureを実行します。GitHub Actionsの `skill-eval` workflowを手動実行すると、`anthropics/claude-code-action@v1` が既定の `claude-sonnet-4-6` で実際にskillを使い、構造化された結果を決定論的な契約検査へ渡します。設定方法、コスト制御、自動PR evalの有効化は [evals/README.md](evals/README.md) を参照してください。
+通常のCIではAPI不要のvalidatorとfixtureを実行します。GitHub Actionsの `skill-eval` workflowを手動実行すると、`anthropics/claude-code-action@v1` が既定の `claude-sonnet-5` で実際にskillを使い、構造化された結果を決定論的な契約検査へ渡します。Sonnet 4.6とOpus 4.8も手動比較できます。設定方法、コスト制御、自動PR evalの有効化は [evals/README.md](evals/README.md) を参照してください。
 
 ## ライセンスとクレジット
 

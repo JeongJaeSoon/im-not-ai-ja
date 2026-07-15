@@ -6,9 +6,10 @@ on:
       model:
         description: Claude model used to execute the skill
         required: true
-        default: claude-sonnet-4-6
+        default: claude-sonnet-5
         type: choice
         options:
+          - claude-sonnet-5
           - claude-sonnet-4-6
           - claude-opus-4-8
   pull_request:
@@ -68,12 +69,18 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Require Anthropic API key
+      - name: Select Claude credential
+        id: claude_auth
         env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::error::Set the ANTHROPIC_API_KEY repository secret before running model evals."
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "mode=oauth" >> "$GITHUB_OUTPUT"
+          elif [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "mode=api" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY as a repository secret before running model evals."
             exit 1
           fi
 
@@ -81,7 +88,9 @@ jobs:
         id: claude_eval
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ steps.claude_auth.outputs.mode == 'oauth' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          anthropic_api_key: ${{ steps.claude_auth.outputs.mode == 'api' && secrets.ANTHROPIC_API_KEY || '' }}
+          github_token: ${{ github.token }}
           prompt: |
             This is a read-only regression eval for the repository's humanize-japanese skill.
 
@@ -96,7 +105,7 @@ jobs:
             Do not edit repository files, run shell commands, access the network, or comment on GitHub.
             Return only the structured result requested by the JSON schema.
           claude_args: |
-            --model ${{ inputs.model || 'claude-sonnet-4-6' }}
+            --model ${{ inputs.model || 'claude-sonnet-5' }}
             --max-turns 12
             --disallowedTools "Bash,Edit,Write,NotebookEditCell,WebFetch,WebSearch"
             --json-schema '{"type":"object","additionalProperties":false,"required":["results"],"properties":{"results":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["case_id","register","output","grade","findings","kept","self_check"],"properties":{"case_id":{"type":"string"},"register":{"type":"string","enum":["R0","R1","R2","R3","R4"]},"output":{"type":"string"},"grade":{"type":"string","enum":["A","B","C","D"]},"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["id","before","after","reason"],"properties":{"id":{"type":"string"},"before":{"type":"string"},"after":{"type":"string"},"reason":{"type":"string"}}}},"kept":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["text","reason"],"properties":{"text":{"type":"string"},"reason":{"type":"string"}}}},"self_check":{"type":"object","additionalProperties":false,"required":["facts","modality","register","no_invention"],"properties":{"facts":{"type":"boolean"},"modality":{"type":"boolean"},"register":{"type":"boolean"},"no_invention":{"type":"boolean"}}}}}}}}'
@@ -116,7 +125,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: humanize-japanese-eval-${{ inputs.model || 'claude-sonnet-4-6' }}
+          name: humanize-japanese-eval-${{ inputs.model || 'claude-sonnet-5' }}
           path: evals/results/
           if-no-files-found: warn
           retention-days: 14

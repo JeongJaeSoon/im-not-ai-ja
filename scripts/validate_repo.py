@@ -75,6 +75,14 @@ def main() -> int:
     )
     if f"--json-schema '{compact_schema}'" not in eval_workflow:
         fail("skill-eval workflow JSON schema is out of sync with evals/result.schema.json")
+    for required_workflow_text in (
+        "default: claude-sonnet-5",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "ANTHROPIC_API_KEY",
+        "github_token: ${{ github.token }}",
+    ):
+        if required_workflow_text not in eval_workflow:
+            fail(f"skill-eval workflow is missing: {required_workflow_text}")
     plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
     marketplace = json.loads(
         (ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
