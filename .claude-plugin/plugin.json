@@ -1,0 +1,13 @@
+{
+  "name": "humanize-japanese",
+  "version": "0.1.0",
+  "description": "AI下書きの意味とレジスターを保ちながら、日本語固有の文体・リズム・表現を整える。",
+  "author": {
+    "name": "JeongJaeSoon"
+  },
+  "homepage": "https://github.com/JeongJaeSoon/im-not-ai-ja",
+  "repository": "https://github.com/JeongJaeSoon/im-not-ai-ja",
+  "license": "MIT",
+  "keywords": ["japanese", "humanize", "ai-writing", "register", "敬語", "文章推敲"],
+  "skills": ["./.claude/skills/"]
+}

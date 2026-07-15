@@ -1,0 +1,20 @@
+{
+  "name": "im-not-ai-ja",
+  "owner": {
+    "name": "JeongJaeSoon"
+  },
+  "metadata": {
+    "description": "日本語のAIっぽさを文脈とレジスターに沿って整えるスキル",
+    "version": "0.1.0",
+    "pluginRoot": "."
+  },
+  "plugins": [
+    {
+      "name": "humanize-japanese",
+      "source": "./",
+      "description": "日本語固有のAI writing patternsを検出し、意味と敬語レベルを保って推敲する。",
+      "version": "0.1.0",
+      "keywords": ["japanese", "humanize", "register", "敬語"]
+    }
+  ]
+}

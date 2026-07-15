@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "purpose": "Diagnostic thresholds, not authorship detection cutoffs",
+  "min_sentences": 5,
+  "uniform_sentence_cv_warning": 0.6,
+  "comma_sentence_ratio_warning": 0.85,
+  "top_ending_share_warning": 0.65,
+  "connector_sentence_ratio_warning": 0.4,
+  "notes": [
+    "Compare texts only after matching genre and register.",
+    "Do not apply rhythm thresholds to easy Japanese, specifications, lists, or short samples.",
+    "Polite-form density and register mixing are descriptive metrics, not AI tells."
+  ]
+}
