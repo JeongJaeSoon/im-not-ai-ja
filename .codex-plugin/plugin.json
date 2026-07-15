@@ -1,0 +1,19 @@
+{
+  "name": "humanize-japanese",
+  "version": "0.3.0",
+  "description": "文脈、意味、レジスターを保ちながら、日本語のAIらしい不自然さを整えるAgent Skill。",
+  "author": {
+    "name": "JeongJaeSoon"
+  },
+  "homepage": "https://github.com/JeongJaeSoon/im-not-ai-ja",
+  "repository": "https://github.com/JeongJaeSoon/im-not-ai-ja",
+  "license": "MIT",
+  "keywords": [
+    "japanese",
+    "humanize",
+    "writing",
+    "register",
+    "honorifics"
+  ],
+  "skills": "./skills"
+}

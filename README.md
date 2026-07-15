@@ -29,38 +29,31 @@ AIが下書きした日本語を、内容や事実、読み手との距離感を
 
 ## インストール
 
-まずリポジトリをクローンします。
-
-```bash
-git clone https://github.com/JeongJaeSoon/im-not-ai-ja.git
-cd im-not-ai-ja
-```
+Claude CodeとCodexのどちらでも、同じ名前のマーケットプレイスとプラグインを登録します。リポジトリのクローンやシンボリックリンクは不要です。
 
 ### Claude Code
 
-ユーザースコープの標準パスへリンクします。
-
 ```bash
-mkdir -p ~/.claude/skills
-ln -s "$(pwd)/skills/humanize-japanese" ~/.claude/skills/humanize-japanese
+claude plugin marketplace add JeongJaeSoon/im-not-ai-ja
+claude plugin install humanize-japanese@im-not-ai-ja
 ```
 
-プロジェクト単位で使う場合は、同じスキルディレクトリを対象プロジェクトの `.claude/skills/humanize-japanese` へリンクまたはコピーします。
+インストール後は、自然な文章で依頼するか、`/humanize-japanese:humanize-japanese` と明示して呼び出せます。反映されない場合はClaude Codeを再起動するか、`/reload-plugins`を実行してください。
 
 ### Codex
 
-ユーザースコープの標準パスへリンクします。
-
 ```bash
-mkdir -p ~/.agents/skills
-ln -s "$(pwd)/skills/humanize-japanese" ~/.agents/skills/humanize-japanese
+codex plugin marketplace add JeongJaeSoon/im-not-ai-ja
+codex plugin add humanize-japanese@im-not-ai-ja
 ```
 
-リポジトリ単位で使う場合は、同じスキルディレクトリを対象リポジトリの `.agents/skills/humanize-japanese` へリンクまたはコピーします。
+インストール後は、自然な文章で依頼するか、`$humanize-japanese:humanize-japanese` と明示して呼び出せます。追加が反映されない場合はCodexを再起動してください。
 
-### 任意の共通インストーラー
+更新、削除、ローカル開発用の直接インストールは [INSTALL.md](INSTALL.md) を参照してください。
 
-Claude CodeやCodexの公式機能ではありませんが、[skills CLI](https://github.com/vercel-labs/skills) を使うと両方へ同時にインストールできます。
+### 代替: 共通スキルインストーラー
+
+プラグイン機能を使えない環境では、[skills CLI](https://github.com/vercel-labs/skills) で同じスキル本体を直接インストールできます。これはClaude CodeやCodexの公式プラグイン機能ではありません。
 
 ```bash
 npx skills add JeongJaeSoon/im-not-ai-ja \
@@ -70,8 +63,6 @@ npx skills add JeongJaeSoon/im-not-ai-ja \
   --agent codex \
   --yes
 ```
-
-コピー方式、更新、削除、旧構成からの移行は [INSTALL.md](INSTALL.md) を参照してください。
 
 ## 使い方
 
@@ -91,19 +82,24 @@ npx skills add JeongJaeSoon/im-not-ai-ja \
 
 ## スキルの構成
 
-実際にインストールするスキルは一つだけです。
+プラグインとして配布しますが、実際のスキル本体は一つだけです。
 
 ```text
-skills/humanize-japanese/
-├── SKILL.md              中核となる指示と実行契約
-├── references/           日本語の規則、分類体系、書き換え指針
-├── scripts/metrics.py    任意の計量診断とbefore/after検査
-└── assets/baseline.json  metrics.pyが使う既定の閾値
+im-not-ai-ja/
+├── .claude-plugin/      Claude Code用のプラグイン・マーケットプレイス定義
+├── .codex-plugin/       Codex用のプラグイン定義
+├── .agents/plugins/     Codex用のマーケットプレイス定義
+└── skills/
+    └── humanize-japanese/
+        ├── SKILL.md              中核となる指示と実行契約
+        ├── references/           日本語の規則、分類体系、書き換え指針
+        ├── scripts/metrics.py    任意の計量診断とbefore/after検査
+        └── assets/baseline.json  metrics.pyが使う既定の閾値
 ```
 
-リポジトリ直下の `skills/` は、GitHub上でスキルを配布・発見するためのパッケージ階層です。ランタイム別のスキルコピー、アダプター用シンボリックリンク、プラグインマニフェスト、同梱エージェント定義は持ちません。
+`.claude-plugin/plugin.json` と `.codex-plugin/plugin.json` は、どちらも同じ `skills/` を参照します。ランタイム別のスキルコピー、アダプター用シンボリックリンク、同梱エージェント定義は持ちません。
 
-通常の推敲にPythonは必要ありません。`metrics.py`は計量診断や厳密なbefore/after比較が必要な場合だけ使う選択的な補助ツールです。リポジトリ直下の `scripts/` と `evals/` は開発・CI用であり、スキル本体としてインストールされません。
+通常の推敲にPythonは必要ありません。`metrics.py`は計量診断や厳密な変更前後の比較が必要な場合だけ使う選択的な補助ツールです。リポジトリ直下の `scripts/` と `evals/` は開発・CI用であり、スキル本体としてインストールされません。
 
 ## 評価
 
