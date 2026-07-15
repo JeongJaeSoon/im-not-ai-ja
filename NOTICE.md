@@ -1,15 +1,19 @@
 # Notices and attribution
 
-## Primary source
+## Origin and current relationship
 
-This project is an independent Japanese adaptation inspired by and derived in structure from:
+This project began as an independent Japanese adaptation inspired by:
 
 - `epoko77-ai/im-not-ai` — https://github.com/epoko77-ai/im-not-ai
 - Upstream revision inspected during initial implementation: `14aeb52d13e737beb4e999cb7cb92275d0969689`
 - License: MIT
 - Copyright: `Copyright (c) 2026 epoko77-ai`
 
-The Fast / Strict workflow, detector–rewriter–auditor separation, severity-based taxonomy, install layout, and content-fidelity contract originate from or are adapted from that project. This repository is not a GitHub fork. The upstream copyright notice and MIT License are preserved in `LICENSE`.
+The upstream project informed the initial Fast / Strict workflow, severity-based review, minimum-editing principle, and content-fidelity contract. Its detector–rewriter–auditor idea remains a workflow influence, but the current repository implements those responsibilities as phases inside one portable skill rather than as copied or bundled agents.
+
+The current Japanese taxonomy, R0–R4 register model, honorific handling, metrics, evaluation system, portable Agent Skill implementation, and installation layout are developed independently in this repository. No upstream runtime adapter, agent definition, command, plugin manifest, or package layout is used by the current implementation.
+
+This repository is not a GitHub fork. The upstream copyright notice and MIT License are preserved in `LICENSE` to document the project's origin and the design influence retained from its initial implementation.
 
 ## Japanese open-source references
 
