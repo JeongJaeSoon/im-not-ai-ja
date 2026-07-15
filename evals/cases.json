@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "skill": ".claude/skills/humanize-japanese/SKILL.md",
+  "skill": "skills/humanize-japanese/SKILL.md",
   "default_max_change_rate": 0.3,
   "cases": [
     {

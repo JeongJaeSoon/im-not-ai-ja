@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-METRICS_PATH = ROOT / ".claude" / "skills" / "humanize-japanese" / "scripts" / "metrics.py"
+METRICS_PATH = ROOT / "skills" / "humanize-japanese" / "scripts" / "metrics.py"
 SPEC = importlib.util.spec_from_file_location("humanize_metrics", METRICS_PATH)
 assert SPEC and SPEC.loader
 metrics = importlib.util.module_from_spec(SPEC)
@@ -157,7 +157,7 @@ class FidelityTests(unittest.TestCase):
                 text=True,
             )
             payload = json.loads(completed.stdout)
-            self.assertEqual(payload["analysis"]["version"], "0.2.0")
+            self.assertEqual(payload["analysis"]["version"], "0.3.0")
 
     def test_explicit_names_are_part_of_integrity_contract(self) -> None:
         before = "佐藤美咲がProject KAIを公開します。"

@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 DEFAULT_THRESHOLDS: dict[str, float | int] = {
     "min_sentences": 5,
@@ -265,7 +265,7 @@ def load_thresholds(path: str | Path | None = None) -> dict[str, float | int]:
     baseline_path = (
         Path(path)
         if path
-        else Path(__file__).resolve().parents[1] / "references" / "baseline.json"
+        else Path(__file__).resolve().parents[1] / "assets" / "baseline.json"
     )
     if baseline_path.exists():
         data = json.loads(baseline_path.read_text(encoding="utf-8"))
