@@ -80,6 +80,8 @@ def main() -> int:
         "CLAUDE_CODE_OAUTH_TOKEN",
         "ANTHROPIC_API_KEY",
         "github_token: ${{ github.token }}",
+        "uses: actions/upload-artifact@v7",
+        "hashFiles('evals/results/**') != ''",
     ):
         if required_workflow_text not in eval_workflow:
             fail(f"skill-eval workflow is missing: {required_workflow_text}")
